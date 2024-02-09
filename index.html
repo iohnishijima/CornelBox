@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>My first three.js app</title>
+		<style>
+			body { margin: 0; }
+		</style>
+        <script src="https://unpkg.com/three@0.137.4/build/three.min.js"></script>
+		
+	</head>
+	<body>
+		<canvas id="c"></canvas>
+		<script src="https://unpkg.com/three@0.137.4/examples/js/controls/OrbitControls.js"></script>
+		<script type="importmap">
+			{
+				"imports": {
+				"three": "https://unpkg.com/three@0.148.0/build/three.module.js",
+				"three/addons/": "https://unpkg.com/three@0.148.0/examples/jsm/"
+				}
+			}
+		</script>
+		<script type="module">
+			import { VRButton } from 'three/addons/webxr/VRButton.js';
+			import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.17/+esm';
+			const gui = new GUI();
+			var scene = new THREE.Scene();
+			var aspect = window.innerWidth / window.innerHeight;
+			var camera = new THREE.PerspectiveCamera( 75, aspect, 0.1, 1000 );
+			var renderer = new THREE.WebGLRenderer();
+			renderer.shadowMap.enabled = true;
+			renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+			// document.body.appendChild( VRButton.createButton( renderer ) );
+			// renderer.xr.enabled = true;
+
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			document.body.appendChild( renderer.domElement );
+			camera.position.z = 100;
+			var material = new THREE.MeshNormalMaterial();
+			var materialLine = new THREE.LineBasicMaterial({ color: 0xffffff });
+
+			function BoxGeo(x,y,z,width, height, depth, col){
+				var geometry = new THREE.BoxGeometry(width, height, depth);
+				var material = new THREE.MeshPhongMaterial({color: col});
+				var geo = new THREE.Mesh( geometry, material );
+				geo.position.x = x;
+				geo.position.y = y;
+				geo.position.z = z;
+				return geo
+			}
+			function SphGeo(x,y,z,radius, width, height,col){
+				var geometry = new THREE.SphereGeometry(radius, width, height);
+				var material = new THREE.MeshPhysicalMaterial( { color: col } );
+				var sphere = new THREE.Mesh( geometry, material );
+				sphere.position.x = x;
+				sphere.position.y = y;
+				sphere.position.z = z;
+				return sphere
+			}
+			function CylinderGeo(x,y,z,radiusTop, radiusBottom, height, radialSegments, col){
+				var geometry = new THREE.CylinderGeometry(radiusTop, radiusBottom, height, radialSegments);
+				var material = new THREE.MeshPhongMaterial({color: col});
+				var geo = new THREE.Mesh( geometry, material );
+				geo.position.x = x;
+				geo.position.y = y;
+				geo.position.z = z;
+				return geo
+			}
+			function ConeGeo(x,y,z,radius, height, radialSegments, col){
+				var geometry = new THREE.ConeGeometry(radius, height, radialSegments);
+				var material = new THREE.MeshLambertMaterial({color: col});
+				var geo = new THREE.Mesh( geometry, material );
+				geo.position.x = x;
+				geo.position.y = y;
+				geo.position.z = z;
+				return geo
+			}
+
+			//Telelumen lighting system
+			var poleTopLeft = BoxGeo(-50,50,-50,4,100,4,'rgb(61,61,61)');
+			var poleTopRight = BoxGeo(50,50,-50,4,100,4,'rgb(61,61,61)');
+			var poleBottomLeft = BoxGeo(-50,50,50,4,100,4,'rgb(61,61,61)');
+			var poleBottomRight = BoxGeo(50,50,50,4,100,4,'rgb(61,61,61)');
+			var floor = BoxGeo(0,2,0,100,1,100, 'rgb(255,255,255)');
+			var leftWall = BoxGeo(-49,40,0,2,80,96, 'rgb(255,0,0)');
+			var backWall = BoxGeo(0,40,-49,96,80,2, 'rgb(255,255,255)');
+			var rightWall = BoxGeo(49,40,0,2,80,96, 'rgb(0,255,0)');
+			var barFront = BoxGeo(0,98,-50,96,4,4,'rgb(61,61,61)');
+			var barBack = BoxGeo(0,98,50,96,4,4,'rgb(61,61,61)');
+			var barLeft = BoxGeo(-50,98,0,4,4,96,'rgb(61,61,61)');
+			var barRight = BoxGeo(50,98,0,4,4,96,'rgb(61,61,61)');
+			var loof = BoxGeo(0,100,0,96,1,96, 'rgb(255,255,255)');
+			var barFront2 = BoxGeo(0,82,-50,96,4,4,'rgb(61,61,61)');
+			var barBack2 = BoxGeo(0,82,50,96,4,4,'rgb(61,61,61)');
+			var barLeft2 = BoxGeo(-50,82,0,4,4,96,'rgb(61,61,61)');
+			var barRight2 = BoxGeo(50,82,0,4,4,96,'rgb(61,61,61)');
+			var leftWall2 = BoxGeo(-50,90,0,2,12,96, 'rgb(255,255,255)');
+			var backWall2 = BoxGeo(0,90,-50,96,12,2, 'rgb(255,255,255)');
+			var rightWall2 = BoxGeo(50,90,0,2,12,96, 'rgb(255,255,255)');
+			var loofBar1 = BoxGeo(0,99,-15,96,1,2,'rgb(61,61,61)');
+			var loofBar2 = BoxGeo(0,99,15,96,1,2,'rgb(61,61,61)');
+			var loofBar3 = BoxGeo(15,99,0,2,1,28,'rgb(61,61,61)');
+			var loofBar4 = BoxGeo(-15,99,0,2,1,28,'rgb(61,61,61)');
+			scene.add(poleTopLeft, poleTopRight, poleBottomLeft, poleBottomRight);
+			scene.add(leftWall,backWall,rightWall, floor);
+			scene.add(barFront,barBack,barLeft,barRight,loof);
+			scene.add(barFront2,barBack2,barLeft2,barRight2);
+			scene.add(leftWall2, backWall2, rightWall2);
+			scene.add(loofBar1, loofBar2,loofBar3,loofBar4);
+			const pointLight = new THREE.PointLight(0xFFFFFF, 2, 150, 1.0);
+			pointLight.position.set( 0, 95, 0 );
+			scene.add( pointLight );
+			const directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+			directionalLight.position.set( 0, 95, 0 )
+			scene.add( directionalLight );
+			const spotLight = new THREE.SpotLight( 0xffffff );
+			spotLight.position.set( 0, 95, 0 );
+			scene.add( spotLight );
+			const hemisphereLight = new THREE.HemisphereLight( 0xffffff, 0x080820, 1 );
+			scene.add( hemisphereLight );
+			const lightList = [pointLight,directionalLight,spotLight]
+
+
+			//table
+			var board = BoxGeo(0,20,0,60,1,40, 'rgb(61,61,61)');
+			var pole1 = CylinderGeo(-25,11,-15,2,2,18,12, 'rgb(61,61,61)');
+			var pole2 = CylinderGeo(25,11,-15,2,2,18,12, 'rgb(61,61,61)');
+			var pole3 = CylinderGeo(-25,11,15,2,2,18,12, 'rgb(61,61,61)');
+			var pole4 = CylinderGeo(25,11,15,2,2,18,12, 'rgb(61,61,61)');
+
+			//material
+			var cone = ConeGeo(-20,24.5,0,3,8,16, 'rgb(255,255,255)');
+			var cylinder = CylinderGeo(20,24.5,0,4,4,8,12, 'rgb(255,255,255)');
+			var sphere = SphGeo(0,24.5,12,4,12,8, 'rgb(255,255,255)');
+			scene.add(cone, cylinder, sphere);
+
+			scene.add(board, pole1,pole2,pole3,pole4);
+
+			const materialList = [poleTopLeft, poleTopRight, poleBottomLeft, poleBottomRight, leftWall,backWall,rightWall, floor, 
+									barFront,barBack,barLeft,barRight,loof,barFront2,barBack2,barLeft2,barRight2,leftWall2, backWall2, 
+									rightWall2,loofBar1, loofBar2,loofBar3,loofBar4, cone, cylinder, sphere,board, pole1,pole2,pole3,pole4];
+
+			//gui
+			var shadowConfig = {
+				lightCastShadow: false,
+				shadowMapSizeWidth: 512,
+				shadowMapSizeHeight: 512,
+				shadowCameraNear: 0.5,
+				shadowCameraFar: 500,
+				materialCastShadow: false, //default is false
+				materialReceiveShadow: false, //default
+			}
+			const shadowGUI = gui.addFolder('shadow');
+			shadowGUI.add(shadowConfig, 'lightCastShadow').onChange( value => {
+				castShadowFunc(lightList,  value)
+			} );
+			shadowGUI.add(shadowConfig, 'shadowMapSizeWidth').onChange( value => {
+				shadowValuesW(lightList,  value)
+			} );
+			shadowGUI.add(shadowConfig, 'shadowMapSizeHeight').onChange( value => {
+				shadowValuesH(lightList,  value)
+			} );
+			shadowGUI.add(shadowConfig, 'shadowCameraNear').onChange( value => {
+				shadowValuesN(lightList,  value)
+			} );
+			shadowGUI.add(shadowConfig, 'shadowCameraFar').onChange( value => {
+				shadowValuesF(lightList,  value)
+			} );
+			shadowGUI.add(shadowConfig, 'materialCastShadow').onChange( value => {
+				castShadowFunc(materialList,  value)
+			} );
+			shadowGUI.add(shadowConfig, 'materialReceiveShadow').onChange( value => {
+				receiveShadowFunc(materialList,  value)
+				console.log(cone)
+			} );
+
+			var colorConfig = {
+				RightWall: 'rgb(0, 255, 0)',
+				LeftWall: 'rgb(255, 0, 0)',
+				BackWall: 'rgb(255, 255, 255)',
+				Floor: 'rgb(255, 255, 255)',
+			}
+			const propGUI = gui.addFolder( 'color' );
+			propGUI.addColor( colorConfig, 'RightWall');
+			propGUI.addColor( colorConfig, 'LeftWall');
+			propGUI.addColor( colorConfig, 'BackWall');
+			propGUI.addColor( colorConfig, 'Floor');
+
+			// var lightsConfig = {
+			// 	directionalLight: false,
+			// 	pointLight: true,
+			// 	spotLight: false,
+			// 	hemisphereLight: false
+			// }
+			var directionalLightConfig = {
+				directionalLight: false,
+				color: 'rgb(255,255,255)',
+				intensity: 1,
+			}
+			var pointLightConfig = {
+				pointLight: true,
+				color: 'rgb(255,255,255)',
+				intensity: 1 ,//- (optional) numeric value of the light's strength/intensity. Default is 1.
+				distance: 0,//- Maximum range of the light. Default is 0 (no limit).
+				decay:  2//- The amount the light dims along the distance of the light. Default is 2.
+			}
+
+			var spotLightConfig = {
+				spotLight: false,
+				color: 'rgb(255,255,255)',
+				intensity: 1,//- (optional) numeric value of the light's strength/intensity. Default is 1.
+				distance: 0, //- Maximum range of the light. Default is 0 (no limit).
+				angle: 1.0471975511965976, //- Maximum angle of light dispersion from its direction whose upper bound is Math.PI/2.
+				penumbra: 0, //- Percent of the spotlight cone that is attenuated due to penumbra. Takes values between zero and 1. Default is zero.
+				decay: 1, //- The amount the light dims along the distance of the light.
+			}
+
+			var hemisphereLightConfig = {
+				hemisphereLight: false,
+				color: 'rgb(255,255,255)',
+				groundColor: 'rgb(125,31,31)',
+				intensity: 1,
+			}
+
+			const directionalLightGUI = gui.addFolder('directionalLight');
+			directionalLightGUI.add(directionalLightConfig, 'directionalLight');
+			directionalLightGUI.addColor(directionalLightConfig, 'color');
+			directionalLightGUI.add(directionalLightConfig, 'intensity',0,1);
+
+			const pointLightGUI = gui.addFolder('pointLight');
+			pointLightGUI.add(pointLightConfig, 'pointLight')
+			pointLightGUI.addColor(pointLightConfig, 'color')
+			pointLightGUI.add(pointLightConfig, 'intensity',0,1)
+			pointLightGUI.add(pointLightConfig, 'distance')
+			pointLightGUI.add(pointLightConfig, 'decay',0,10)
+
+			const spotLightGUI = gui.addFolder('spotLight');
+			spotLightGUI.add(spotLightConfig, 'spotLight')
+			spotLightGUI.addColor(spotLightConfig, 'color')
+			spotLightGUI.add(spotLightConfig, 'intensity',0,1)
+			spotLightGUI.add(spotLightConfig, 'distance')
+			spotLightGUI.add(spotLightConfig, 'angle',0,(Math.PI/2))
+			spotLightGUI.add(spotLightConfig, 'penumbra',0,1)
+			spotLightGUI.add(spotLightConfig, 'decay',0,10)
+
+
+			const hemisphereLightGUI = gui.addFolder('hemisphereLight');
+			hemisphereLightGUI.add(hemisphereLightConfig, 'hemisphereLight')
+			hemisphereLightGUI.addColor(hemisphereLightConfig, 'color')
+			hemisphereLightGUI.addColor(hemisphereLightConfig, 'groundColor')
+			hemisphereLightGUI.add(hemisphereLightConfig, 'intensity',0,1)
+
+
+
+			// const lightGUI = gui.addFolder('lights');
+			// lightGUI.add(lightsConfig, 'directionalLight');
+			// lightGUI.add(lightsConfig, 'pointLight');
+			// lightGUI.add(lightsConfig, 'spotLight');
+			// lightGUI.add(lightsConfig, 'hemisphereLight');
+
+			var num = 0;
+			var points = [];
+			points.push( new THREE.Vector3( -1.5, 0, 0 ) );
+			points.push( new THREE.Vector3( 1.5, 0, 0 ) );
+			var geometry2 = new THREE.BufferGeometry().setFromPoints( points );
+
+			var points2 = [];
+			points2.push( new THREE.Vector3( 0, 0, -1.5 ) );
+			points2.push( new THREE.Vector3( 0, 0, 1.5) );
+			var geometry3 = new THREE.BufferGeometry().setFromPoints( points2 );
+
+			var ground = function (){
+				var date1 = new Date();
+					for (let ground_x = -300; ground_x < 300; ground_x+=6){
+						for (let ground_z = -300; ground_z < 300; ground_z+=6){
+							var line_op = (20 / Math.sqrt(ground_x**2 + ground_z**2));
+
+							var material2 = new THREE.LineBasicMaterial({
+								color: 0xffffff,
+								transparent: true,
+								opacity: line_op
+							});
+
+							var line = new THREE.Line( geometry2, material2 );
+							var line2 = new THREE.Line( geometry3, material2 );
+							line.position.set(ground_x, 0, ground_z);
+							line2.position.set(ground_x, 0, ground_z);
+							scene.add( line, line2 );
+						}
+					}
+					var date2 = new Date();
+					console.log(date2-date1);
+			};
+			// ground();
+
+			var controls = new THREE.OrbitControls( camera, renderer.domElement );
+			controls.listenToKeyEvents( window ); // optional
+
+			// const materialList = [];
+
+			function castShadowFunc(materialList, condition){
+				for (let i = 0; i < materialList.length; ++i) {
+					materialList[i].castShadow = condition;
+				}
+			}
+			function receiveShadowFunc(materialList, condition){
+				for (let i = 0; i < materialList.length; ++i) {
+					materialList[i].receiveShadow = condition;
+				}
+			}
+			function shadowValuesW(materialList, values){
+				for (let i = 0; i < materialList.length; ++i) {
+					materialList[i].shadow.mapSize.width = values;
+				}
+			}
+			function shadowValuesH(materialList, values){
+				for (let i = 0; i < materialList.length; ++i) {
+					materialList[i].shadow.mapSize.height = values;
+				}
+			}
+			function shadowValuesN(materialList, values){
+				for (let i = 0; i < materialList.length; ++i) {
+					materialList[i].shadow.camera.near = values;
+				}
+			}
+			function shadowValuesF(materialList, values){
+				for (let i = 0; i < materialList.length; ++i) {
+					materialList[i].shadow.camera.far = values;
+				}
+			}
+
+			var render = function () {
+				requestAnimationFrame( render );
+				renderer.render( scene, camera );
+
+				rightWall.material.color.set(colorConfig.RightWall);
+				leftWall.material.color.set(colorConfig.LeftWall);
+				backWall.material.color.set(colorConfig.BackWall);
+				floor.material.color.set(colorConfig.Floor);
+				directionalLight.visible = directionalLightConfig.directionalLight;
+				directionalLight.color.set(directionalLightConfig.color);
+				directionalLight.intensity = directionalLightConfig.intensity;
+
+				pointLight.visible = pointLightConfig.pointLight;
+				pointLight.color.set(pointLightConfig.color);
+				pointLight.intensity = pointLightConfig.intensity;
+				pointLight.distance = pointLightConfig.distance;
+				pointLight.decay = pointLightConfig.decay;
+
+				spotLight.visible = spotLightConfig.spotLight;
+				spotLight.color.set(spotLightConfig.color);
+				spotLight.intensity = spotLightConfig.intensity;
+				spotLight.distance = spotLightConfig.distance;
+				spotLight.angle = spotLightConfig.angle;
+				spotLight.penumbra = spotLightConfig.penumbra;
+				spotLight.decay = spotLightConfig.decay;
+
+				hemisphereLight.visible = hemisphereLightConfig.hemisphereLight;
+				hemisphereLight.color.set(hemisphereLightConfig.color);
+				hemisphereLight.groundColor.set(hemisphereLightConfig.groundColor);
+				hemisphereLight.intensity = hemisphereLightConfig.intensity;
+			};
+			render();
+
+		</script>
+	</body>
+</html>
